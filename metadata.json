@@ -1,0 +1,5 @@
+{
+  "name": "CoreCompare AI",
+  "description": "A comprehensive core banking migration comparison tool powered by Gemini. Compare legacy and next-gen system outputs, identify discrepancies, and analyze root causes with AI assistance.",
+  "requestFramePermissions": []
+}
