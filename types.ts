@@ -45,6 +45,8 @@ export interface DiscrepancyReason {
   code: string;
   label: string;
   description: string;
+  label_zh?: string;
+  description_zh?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 

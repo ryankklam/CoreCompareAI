@@ -3,6 +3,8 @@ import { ComparisonStats, ComparisonResult } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Activity, AlertTriangle, CheckCircle, FileText, RefreshCw, BarChart2, Filter, X, ArrowRight } from 'lucide-react';
 import { generateExecutiveSummary } from '../services/geminiService';
+import { useLanguage } from '../contexts/LanguageContext';
+import { REASON_DICTIONARY } from '../constants';
 
 interface DashboardProps {
   stats: ComparisonStats;
@@ -13,6 +15,7 @@ interface DashboardProps {
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
 
 const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) => {
+  const { t, language } = useLanguage();
   const [summary, setSummary] = useState<string>("");
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [selectedField, setSelectedField] = useState<string | null>(null);
@@ -46,14 +49,18 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
   }, [selectedField, stats, results]);
 
   const pieData = [
-    { name: 'Matched', value: displayedStats.matchCount },
+    { name: t('dashboard.matched'), value: displayedStats.matchCount },
     { name: 'Mismatch', value: displayedStats.mismatchCount },
   ];
 
-  const reasonData = Object.entries(displayedStats.discrepancyBreakdown).map(([key, value]) => ({
-    name: key,
-    count: value,
-  }));
+  const reasonData = Object.entries(displayedStats.discrepancyBreakdown).map(([key, value]) => {
+    // Get translated label for the reason code if available
+    const label = (REASON_DICTIONARY[key] && (language === 'zh' ? REASON_DICTIONARY[key].label_zh : REASON_DICTIONARY[key].label)) || key;
+    return {
+      name: label,
+      count: value,
+    };
+  });
 
   const fieldData = Object.entries(stats.fieldStats).map(([field, data]) => ({
     name: field,
@@ -69,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         ? results.filter(r => r.diffs.includes(selectedField))
         : results.filter(r => r.type !== 'MATCH');
 
-    const text = await generateExecutiveSummary(displayedStats, relevantResults);
+    const text = await generateExecutiveSummary(displayedStats, relevantResults, language);
     setSummary(text);
     setLoadingSummary(false);
   };
@@ -113,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
       return (
         <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg text-sm">
           {payload.map((entry: any, index: number) => {
-             const isGaps = entry.name === 'Gaps';
+             const isGaps = entry.name === t('dashboard.gaps');
              const color = isGaps ? '#ef4444' : '#10b981';
              return (
                  <div key={index} className="flex items-center gap-2 py-1">
@@ -149,14 +156,14 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         <div className="bg-blue-600 text-white px-4 py-3 rounded-xl flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
                 <Filter size={20} />
-                <span className="font-medium">Filtering Stats by Field: <span className="font-bold">{selectedField}</span></span>
+                <span className="font-medium">{t('dashboard.filter_banner')} <span className="font-bold">{selectedField}</span></span>
             </div>
             <div className="flex items-center gap-3">
                 <button 
                     onClick={() => onFieldClick(selectedField)}
                     className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                    View Details <ArrowRight size={14} />
+                    {t('dashboard.view_details')} <ArrowRight size={14} />
                 </button>
                 <button 
                     onClick={() => setSelectedField(null)}
@@ -175,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <FileText size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">{selectedField ? `Total ${selectedField}` : 'Total Records'}</p>
+            <p className="text-sm text-gray-500 font-medium">{selectedField ? `Total ${selectedField}` : t('dashboard.total_records')}</p>
             <h3 className="text-2xl font-bold text-gray-800">{displayedStats.totalRecords}</h3>
           </div>
         </div>
@@ -185,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <CheckCircle size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Match Rate</p>
+            <p className="text-sm text-gray-500 font-medium">{t('dashboard.match_rate')}</p>
             <h3 className="text-2xl font-bold text-gray-800">{displayedStats.matchRate.toFixed(2)}%</h3>
           </div>
         </div>
@@ -195,7 +202,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <AlertTriangle size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">{selectedField ? 'Gaps Detected' : 'Records with Gaps'}</p>
+            <p className="text-sm text-gray-500 font-medium">{selectedField ? t('dashboard.gaps_detected') : t('dashboard.records_with_gaps')}</p>
             <h3 className="text-2xl font-bold text-gray-800">{displayedStats.mismatchCount}</h3>
           </div>
         </div>
@@ -205,7 +212,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <Activity size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Processing Time</p>
+            <p className="text-sm text-gray-500 font-medium">{t('dashboard.processing_time')}</p>
             <h3 className="text-2xl font-bold text-gray-800">0.8s</h3>
           </div>
         </div>
@@ -217,10 +224,10 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <BarChart2 size={20} className="text-blue-500"/>
-              Field Level Discrepancy Analysis
+              {t('dashboard.field_analysis')}
             </h3>
             <span className="text-xs text-gray-500 hidden sm:inline">
-                {selectedField ? 'Click selected bar again to clear filter.' : 'Click a bar to filter dashboard stats by field.'}
+                {selectedField ? t('dashboard.field_analysis_hint_active') : t('dashboard.field_analysis_hint')}
             </span>
           </div>
           <div className="h-64">
@@ -241,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                 />
                 <Legend 
                   formatter={(value, entry) => (
-                      <span style={{ color: value === 'Gaps' ? '#ef4444' : '#374151', fontWeight: 500 }}>{value}</span>
+                      <span style={{ color: value === t('dashboard.gaps') ? '#ef4444' : '#374151', fontWeight: 500 }}>{value}</span>
                   )}
                 />
                 <Bar 
@@ -249,7 +256,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                     stackId="a" 
                     fill="#10b981" 
                     radius={[4, 0, 0, 4]} 
-                    name="Matched" 
+                    name={t('dashboard.matched')} 
                     barSize={20} 
                 />
                 <Bar 
@@ -257,7 +264,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                     stackId="a" 
                     fill="#ef4444" // Add base fill for Legend icon
                     radius={[0, 4, 4, 0]} 
-                    name="Gaps" 
+                    name={t('dashboard.gaps')} 
                     barSize={20}
                     cursor="pointer"
                     onClick={handleChartClick}
@@ -277,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         {/* Reason Breakdown Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            {selectedField ? `Root Causes for ${selectedField}` : 'Discrepancy Root Causes'}
+            {selectedField ? `${t('dashboard.root_causes_for')} ${selectedField}` : t('dashboard.root_causes')}
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -295,7 +302,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         {/* Match Ratio Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-             {selectedField ? `Integrity: ${selectedField}` : 'Overall Record Integrity'}
+             {selectedField ? `Integrity: ${selectedField}` : t('dashboard.integrity')}
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -320,7 +327,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                         {displayedStats.matchRate.toFixed(1)}%
                     </tspan>
                     <tspan x="50%" dy="1.5em" fontSize="12" fill="#6b7280" fontWeight="500">
-                        Match Rate
+                        {t('dashboard.match_rate')}
                     </tspan>
                 </text>
                 <Tooltip />
@@ -336,7 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-indigo-900 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-            AI Executive Summary {selectedField ? `(${selectedField})` : ''}
+            {t('dashboard.ai_summary')} {selectedField ? `(${selectedField})` : ''}
           </h3>
           <button 
             onClick={handleGenerateSummary}
@@ -344,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium shadow-sm"
           >
             {loadingSummary ? <RefreshCw className="animate-spin" size={16}/> : <FileText size={16}/>}
-            Generate Report
+            {t('dashboard.generate_report')}
           </button>
         </div>
         
@@ -353,7 +360,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
              <div className="whitespace-pre-line leading-relaxed">{summary}</div>
           </div>
         ) : (
-          <p className="text-sm text-gray-500 italic">Click "Generate Report" to have Gemini analyze the current statistics and risk factors.</p>
+          <p className="text-sm text-gray-500 italic">{t('dashboard.ai_placeholder')}</p>
         )}
       </div>
     </div>
