@@ -3,6 +3,7 @@ import { ComparisonResult, DiscrepancyType } from '../types';
 import { REASON_DICTIONARY } from '../constants';
 import { Search, AlertCircle, Check, ChevronRight, X, Sparkles, Filter, ChevronDown, ArrowLeft } from 'lucide-react';
 import { analyzeDiscrepancyWithAI } from '../services/geminiService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ComparisonTableProps {
   results: ComparisonResult[];
@@ -11,6 +12,7 @@ interface ComparisonTableProps {
 }
 
 const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldFilter, onFieldFilterChange }) => {
+  const { t, language } = useLanguage();
   // Updated filter state to include dimensions: ALL, EXPECTED, UNKNOWN
   const [filter, setFilter] = useState<'ALL' | 'EXPECTED' | 'UNKNOWN'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,13 +57,13 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
 
   const handleAiAnalyze = async (record: ComparisonResult) => {
     setAnalyzingId(record.recordId);
-    const analysis = await analyzeDiscrepancyWithAI(record.oldRecord, record.newRecord, REASON_DICTIONARY);
+    const analysis = await analyzeDiscrepancyWithAI(record.oldRecord, record.newRecord, REASON_DICTIONARY, language);
     setAiAnalysis(prev => ({ ...prev, [record.recordId]: analysis }));
     setAnalyzingId(null);
   };
 
   const StatusBadge = ({ type }: { type: DiscrepancyType }) => {
-    if (type === DiscrepancyType.MATCH) return <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium flex items-center gap-1 w-fit whitespace-nowrap"><Check size={12}/> Match</span>;
+    if (type === DiscrepancyType.MATCH) return <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium flex items-center gap-1 w-fit whitespace-nowrap"><Check size={12}/> {t('detail.match')}</span>;
     return <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium flex items-center gap-1 w-fit whitespace-nowrap"><AlertCircle size={12}/> {type}</span>;
   };
 
@@ -76,7 +78,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
            
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-800">Records</h2>
+                <h2 className="text-lg font-semibold text-gray-800">{t('table.records')}</h2>
                 <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-xs font-medium">{filteredResults.length}</span>
               </div>
               
@@ -91,7 +93,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                         onChange={(e) => onFieldFilterChange(e.target.value || null)}
                         className={`w-full pl-9 pr-8 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white transition-colors cursor-pointer ${activeFieldFilter ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200 text-gray-700'}`}
                     >
-                        <option value="">All Fields</option>
+                        <option value="">{language === 'zh' ? '所有字段' : 'All Fields'}</option>
                         {allFields.map(field => (
                             <option key={field} value={field}>{field}</option>
                         ))}
@@ -106,7 +108,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     type="text" 
-                    placeholder="Search ID..." 
+                    placeholder={t('table.search_placeholder')} 
                     className="w-full xl:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -119,21 +121,21 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                     className={`flex-1 xl:flex-none px-3 py-2 text-sm font-medium ${filter === 'ALL' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     onClick={() => setFilter('ALL')}
                   >
-                    All
+                    {t('table.filter.all')}
                   </button>
                   <button 
                     className={`flex-1 xl:flex-none px-3 py-2 text-sm font-medium whitespace-nowrap ${filter === 'EXPECTED' ? 'bg-blue-50 text-blue-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     onClick={() => setFilter('EXPECTED')}
                     title="Expected Gaps (Defined in Known Discrepancy Dictionary)"
                   >
-                    Expected Gap
+                    {t('table.filter.expected')}
                   </button>
                   <button 
                     className={`flex-1 xl:flex-none px-3 py-2 text-sm font-medium ${filter === 'UNKNOWN' ? 'bg-red-50 text-red-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     onClick={() => setFilter('UNKNOWN')}
                     title="Unknown Mismatches"
                   >
-                    Unknown
+                    {t('table.filter.unknown')}
                   </button>
                 </div>
               </div>
@@ -144,20 +146,20 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 font-medium">Record ID</th>
+                <th className="px-4 py-3 font-medium">{t('table.col.id')}</th>
                 
                 {/* Dynamic Columns based on Field Filter */}
                 {activeFieldFilter ? (
                   <>
-                     <th className="px-4 py-3 font-medium bg-red-50/50 text-red-600">Legacy {activeFieldFilter}</th>
-                     <th className="px-4 py-3 font-medium bg-green-50/50 text-green-600">New {activeFieldFilter}</th>
+                     <th className="px-4 py-3 font-medium bg-red-50/50 text-red-600">{t('table.col.legacy')} {activeFieldFilter}</th>
+                     <th className="px-4 py-3 font-medium bg-green-50/50 text-green-600">{t('table.col.new')} {activeFieldFilter}</th>
                   </>
                 ) : (
-                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">{t('table.col.status')}</th>
                 )}
 
-                <th className="px-4 py-3 font-medium hidden sm:table-cell">Reason</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
+                <th className="px-4 py-3 font-medium hidden sm:table-cell">{t('table.col.reason')}</th>
+                <th className="px-4 py-3 font-medium text-right">{t('table.col.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -204,7 +206,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
               ))}
               {filteredResults.length === 0 && (
                   <tr>
-                      <td colSpan={5} className="text-center py-8 text-gray-400 italic">No records found matching filters.</td>
+                      <td colSpan={5} className="text-center py-8 text-gray-400 italic">{t('table.no_records')}</td>
                   </tr>
               )}
             </tbody>
@@ -232,7 +234,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                   <ArrowLeft size={20} />
               </button>
               <div>
-                <h3 className="font-semibold text-gray-800">Record Details</h3>
+                <h3 className="font-semibold text-gray-800">{t('detail.title')}</h3>
                 <p className="text-xs text-gray-500">{selectedRecord.recordId}</p>
               </div>
             </div>
@@ -253,14 +255,19 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                     selectedRecord.reasonCode === 'UNKNOWN' ? 'text-red-800' : 'text-blue-800'
                  }`}>
                     <AlertCircle size={16}/> 
-                    {selectedRecord.reasonCode === 'UNKNOWN' ? 'Unknown Discrepancy' : 'Known Discrepancy Identified'}
+                    {selectedRecord.reasonCode === 'UNKNOWN' ? t('detail.unknown_title') : t('detail.known_title')}
                  </h4>
                  {selectedRecord.reasonCode && REASON_DICTIONARY[selectedRecord.reasonCode] && (
                     <div className={`text-xs mt-1 ${
                         selectedRecord.reasonCode === 'UNKNOWN' ? 'text-red-700' : 'text-blue-700'
                     }`}>
-                      <p className="font-medium">{REASON_DICTIONARY[selectedRecord.reasonCode].label} ({selectedRecord.reasonCode})</p>
-                      <p className="opacity-80">{REASON_DICTIONARY[selectedRecord.reasonCode].description}</p>
+                      <p className="font-medium">
+                        {(language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].label_zh : REASON_DICTIONARY[selectedRecord.reasonCode].label)} 
+                        ({selectedRecord.reasonCode})
+                      </p>
+                      <p className="opacity-80">
+                        {(language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].description_zh : REASON_DICTIONARY[selectedRecord.reasonCode].description)}
+                      </p>
                     </div>
                  )}
                </div>
@@ -269,9 +276,9 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
             {/* Field Comparison Grid */}
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-500 uppercase pb-2 border-b">
-                <div>Field</div>
-                <div>Legacy</div>
-                <div>New Core</div>
+                <div>{t('detail.field')}</div>
+                <div>{t('detail.legacy_core')}</div>
+                <div>{t('detail.new_core')}</div>
               </div>
               
               {dynamicColumns.map((field) => {
@@ -299,7 +306,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                     <Sparkles size={14} className="text-indigo-500" />
-                    AI Root Cause Analysis
+                    {t('detail.ai_analysis')}
                   </h4>
                   {!aiAnalysis[selectedRecord.recordId] && (
                     <button 
@@ -307,7 +314,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                       disabled={analyzingId === selectedRecord.recordId}
                       className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition flex items-center gap-1 disabled:opacity-50"
                     >
-                      {analyzingId === selectedRecord.recordId ? 'Analyzing...' : 'Analyze'}
+                      {analyzingId === selectedRecord.recordId ? t('detail.analyzing') : t('detail.analyze_btn')}
                     </button>
                   )}
                 </div>
@@ -318,7 +325,7 @@ const ComparisonTable: React.FC<ComparisonTableProps> = ({ results, activeFieldF
                   </div>
                 ) : (
                   <p className="text-xs text-gray-400">
-                    Use Gemini AI to analyze unclassified discrepancies or get a deeper explanation of the root cause.
+                    {t('detail.ai_hint')}
                   </p>
                 )}
               </div>

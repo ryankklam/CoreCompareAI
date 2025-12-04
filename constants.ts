@@ -2,13 +2,62 @@ import { DataRecord, DiscrepancyReason, ComparisonConfig, SchemaType } from './t
 
 // 1. The Reason Dictionary
 export const REASON_DICTIONARY: Record<string, DiscrepancyReason> = {
-  'R001': { code: 'R001', label: 'Rounding Difference', description: 'Variance due to different rounding precision (e.g. 2 vs 4 decimals).', severity: 'low' },
-  'R002': { code: 'R002', label: 'Migration Transformation', description: 'Data transformed during migration logic (e.g. Product Code mapping).', severity: 'medium' },
-  'R003': { code: 'R003', label: 'Date Offset', description: 'Date varies by +/- 1 day due to timezone or EOD logic.', severity: 'low' },
-  'R004': { code: 'R004', label: 'Truncation', description: 'String field truncated in target system.', severity: 'low' },
-  'R005': { code: 'R005', label: 'Record Drop', description: 'Record failed to migrate completely.', severity: 'critical' },
-  'R006': { code: 'R006', label: 'Interest Logic Change', description: 'Accrual calculation method updated in new core.', severity: 'medium' },
-  'UNKNOWN': { code: 'UNKNOWN', label: 'Requires Investigation', description: 'No automatic rule matched this discrepancy.', severity: 'high' },
+  'R001': { 
+    code: 'R001', 
+    label: 'Rounding Difference', 
+    description: 'Variance due to different rounding precision (e.g. 2 vs 4 decimals).',
+    label_zh: '精度舍入差异',
+    description_zh: '由于不同的小数位精度（例如2位与4位）导致的差异。',
+    severity: 'low' 
+  },
+  'R002': { 
+    code: 'R002', 
+    label: 'Migration Transformation', 
+    description: 'Data transformed during migration logic (e.g. Product Code mapping).', 
+    label_zh: '迁移转换逻辑',
+    description_zh: '迁移过程中因业务逻辑转换导致的数据变更（如产品代码映射）。',
+    severity: 'medium' 
+  },
+  'R003': { 
+    code: 'R003', 
+    label: 'Date Offset', 
+    description: 'Date varies by +/- 1 day due to timezone or EOD logic.', 
+    label_zh: '日期偏移',
+    description_zh: '由于时区或日终（EOD）逻辑导致的+/- 1天日期差异。',
+    severity: 'low' 
+  },
+  'R004': { 
+    code: 'R004', 
+    label: 'Truncation', 
+    description: 'String field truncated in target system.', 
+    label_zh: '字段截断',
+    description_zh: '目标系统中的字符串字段被截断。',
+    severity: 'low' 
+  },
+  'R005': { 
+    code: 'R005', 
+    label: 'Record Drop', 
+    description: 'Record failed to migrate completely.', 
+    label_zh: '记录丢失',
+    description_zh: '记录未成功迁移至新核心。',
+    severity: 'critical' 
+  },
+  'R006': { 
+    code: 'R006', 
+    label: 'Interest Logic Change', 
+    description: 'Accrual calculation method updated in new core.', 
+    label_zh: '计息逻辑变更',
+    description_zh: '新核心中的利息计提计算方法已更新。',
+    severity: 'medium' 
+  },
+  'UNKNOWN': { 
+    code: 'UNKNOWN', 
+    label: 'Requires Investigation', 
+    description: 'No automatic rule matched this discrepancy.', 
+    label_zh: '需人工调查',
+    description_zh: '没有自动规则匹配此差异。',
+    severity: 'high' 
+  },
 };
 
 // 2. Job Configurations

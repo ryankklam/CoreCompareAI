@@ -13,14 +13,20 @@ const getAiClient = () => {
 export const analyzeDiscrepancyWithAI = async (
   oldRecord: DataRecord | undefined,
   newRecord: DataRecord | undefined,
-  knownReasons: Record<string, DiscrepancyReason>
+  knownReasons: Record<string, DiscrepancyReason>,
+  language: 'en' | 'zh' = 'en'
 ): Promise<string> => {
   const ai = getAiClient();
-  if (!ai) return "AI Configuration Missing: API Key not found.";
+  if (!ai) return language === 'zh' ? "AI 配置缺失：未找到 API Key。" : "AI Configuration Missing: API Key not found.";
+
+  const langInstruction = language === 'zh' 
+    ? "Please answer in Chinese (Simplified)." 
+    : "Please answer in English.";
 
   const prompt = `
     You are a Senior Core Banking Systems Analyst.
     Compare the following two transaction records (Legacy Core vs. New Core) and explain the discrepancy.
+    ${langInstruction}
     
     Legacy Record: ${JSON.stringify(oldRecord)}
     New Core Record: ${JSON.stringify(newRecord)}
@@ -40,22 +46,28 @@ export const analyzeDiscrepancyWithAI = async (
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
-    return response.text || "Unable to generate analysis.";
+    return response.text || (language === 'zh' ? "无法生成分析结果。" : "Unable to generate analysis.");
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Error retrieving AI analysis. Please check your network or API key.";
+    return language === 'zh' ? "获取 AI 分析时出错，请检查网络或 API Key。" : "Error retrieving AI analysis. Please check your network or API key.";
   }
 };
 
 export const generateExecutiveSummary = async (
   stats: any,
-  sampleDiscrepancies: any[]
+  sampleDiscrepancies: any[],
+  language: 'en' | 'zh' = 'en'
 ): Promise<string> => {
    const ai = getAiClient();
-   if (!ai) return "AI Configuration Missing.";
+   if (!ai) return language === 'zh' ? "AI 配置缺失。" : "AI Configuration Missing.";
+
+   const langInstruction = language === 'zh' 
+    ? "Please generate the summary in Chinese (Simplified)." 
+    : "Please generate the summary in English.";
 
    const prompt = `
      Generate an executive summary for a Core Banking Migration UAT report.
+     ${langInstruction}
      
      Statistics:
      ${JSON.stringify(stats)}
@@ -75,8 +87,8 @@ export const generateExecutiveSummary = async (
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
-    return response.text || "Unable to generate summary.";
+    return response.text || (language === 'zh' ? "无法生成摘要。" : "Unable to generate summary.");
   } catch (error) {
-    return "Error generating summary.";
+    return language === 'zh' ? "生成摘要时出错。" : "Error generating summary.";
   }
 }
