@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ComparisonStats, ComparisonResult } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { Activity, AlertTriangle, CheckCircle, FileText, RefreshCw, BarChart2 } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, FileText, RefreshCw, BarChart2, Filter, X, ArrowRight } from 'lucide-react';
 import { generateExecutiveSummary } from '../services/geminiService';
 
 interface DashboardProps {
@@ -15,13 +15,42 @@ const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
 const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) => {
   const [summary, setSummary] = useState<string>("");
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [selectedField, setSelectedField] = useState<string | null>(null);
+
+  // Calculate statistics dynamically based on selection
+  const displayedStats = useMemo(() => {
+    if (!selectedField) return stats;
+
+    const fieldStat = stats.fieldStats[selectedField];
+    // Safety check if field stat doesn't exist
+    if (!fieldStat) return stats;
+
+    // Recalculate breakdown for the specific field
+    const breakdown: Record<string, number> = {};
+    results.forEach(r => {
+      // Only count reasons if this specific field has a diff
+      if (r.diffs.includes(selectedField)) {
+        const reason = r.reasonCode || 'Unclassified';
+        breakdown[reason] = (breakdown[reason] || 0) + 1;
+      }
+    });
+
+    return {
+      totalRecords: fieldStat.total, // Total records containing this field
+      matchCount: fieldStat.total - fieldStat.mismatch,
+      mismatchCount: fieldStat.mismatch,
+      matchRate: fieldStat.total > 0 ? ((fieldStat.total - fieldStat.mismatch) / fieldStat.total) * 100 : 0,
+      discrepancyBreakdown: breakdown,
+      fieldStats: stats.fieldStats // Keep original field stats for the main chart
+    };
+  }, [selectedField, stats, results]);
 
   const pieData = [
-    { name: 'Matched', value: stats.matchCount },
-    { name: 'Mismatch', value: stats.mismatchCount },
+    { name: 'Matched', value: displayedStats.matchCount },
+    { name: 'Mismatch', value: displayedStats.mismatchCount },
   ];
 
-  const reasonData = Object.entries(stats.discrepancyBreakdown).map(([key, value]) => ({
+  const reasonData = Object.entries(displayedStats.discrepancyBreakdown).map(([key, value]) => ({
     name: key,
     count: value,
   }));
@@ -35,25 +64,42 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
 
   const handleGenerateSummary = async () => {
     setLoadingSummary(true);
-    const mismatches = results.filter(r => r.type !== 'MATCH');
-    const text = await generateExecutiveSummary(stats, mismatches);
+    // If filtered, pass only relevant discrepancies to AI
+    const relevantResults = selectedField 
+        ? results.filter(r => r.diffs.includes(selectedField))
+        : results.filter(r => r.type !== 'MATCH');
+
+    const text = await generateExecutiveSummary(displayedStats, relevantResults);
     setSummary(text);
     setLoadingSummary(false);
+  };
+
+  const handleChartClick = (data: any) => {
+    if (data && data.name) {
+       // Toggle selection
+       setSelectedField(prev => prev === data.name ? null : data.name);
+       setSummary(""); // Reset summary as context changed
+    }
   };
 
   // Custom Tick Component for Y-Axis to make labels clickable
   const CustomYAxisTick = (props: any) => {
     const { x, y, payload } = props;
+    const isSelected = payload.value === selectedField;
     return (
       <g transform={`translate(${x},${y})`}>
         <text 
           x={-5} 
           y={4} 
           textAnchor="end" 
-          fill="#4b5563" 
+          fill={isSelected ? "#2563eb" : "#4b5563"} 
+          fontWeight={isSelected ? "bold" : "normal"}
           fontSize={12}
           className="cursor-pointer hover:fill-blue-600 hover:font-bold hover:underline transition-all duration-200"
-          onClick={() => onFieldClick(payload.value)}
+          onClick={() => {
+             setSelectedField(prev => prev === payload.value ? null : payload.value);
+             setSummary("");
+          }}
         >
           {payload.value}
         </text>
@@ -61,8 +107,67 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
     );
   };
 
+  // Custom Tooltip for Field Analysis to make "Gaps" red
+  const FieldAnalysisTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg text-sm">
+          {payload.map((entry: any, index: number) => {
+             const isGaps = entry.name === 'Gaps';
+             const color = isGaps ? '#ef4444' : '#10b981';
+             return (
+                 <div key={index} className="flex items-center gap-2 py-1">
+                     <div 
+                        className="w-2.5 h-2.5 rounded-full" 
+                        style={{ backgroundColor: entry.color }}
+                     ></div>
+                     <span 
+                        style={{ 
+                            color: isGaps ? '#ef4444' : '#374151',
+                            fontWeight: isGaps ? 600 : 400
+                        }}
+                     >
+                        {entry.name}:
+                     </span>
+                     <span className="font-mono font-medium text-gray-700">
+                        {entry.value}
+                     </span>
+                 </div>
+             );
+          })}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-6 space-y-6 animate-fade-in relative">
+      
+      {/* Filter Banner */}
+      {selectedField && (
+        <div className="bg-blue-600 text-white px-4 py-3 rounded-xl flex items-center justify-between shadow-md">
+            <div className="flex items-center gap-2">
+                <Filter size={20} />
+                <span className="font-medium">Filtering Stats by Field: <span className="font-bold">{selectedField}</span></span>
+            </div>
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => onFieldClick(selectedField)}
+                    className="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                    View Details <ArrowRight size={14} />
+                </button>
+                <button 
+                    onClick={() => setSelectedField(null)}
+                    className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
@@ -70,8 +175,8 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <FileText size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Total Records</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.totalRecords}</h3>
+            <p className="text-sm text-gray-500 font-medium">{selectedField ? `Total ${selectedField}` : 'Total Records'}</p>
+            <h3 className="text-2xl font-bold text-gray-800">{displayedStats.totalRecords}</h3>
           </div>
         </div>
         
@@ -81,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Match Rate</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.matchRate.toFixed(2)}%</h3>
+            <h3 className="text-2xl font-bold text-gray-800">{displayedStats.matchRate.toFixed(2)}%</h3>
           </div>
         </div>
 
@@ -90,8 +195,8 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <AlertTriangle size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Records with Gaps</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.mismatchCount}</h3>
+            <p className="text-sm text-gray-500 font-medium">{selectedField ? 'Gaps Detected' : 'Records with Gaps'}</p>
+            <h3 className="text-2xl font-bold text-gray-800">{displayedStats.mismatchCount}</h3>
           </div>
         </div>
 
@@ -100,21 +205,23 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
             <Activity size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Time Taken</p>
+            <p className="text-sm text-gray-500 font-medium">Processing Time</p>
             <h3 className="text-2xl font-bold text-gray-800">0.8s</h3>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Field Level Analysis (NEW) */}
+        {/* Field Level Analysis */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <BarChart2 size={20} className="text-blue-500"/>
               Field Level Discrepancy Analysis
             </h3>
-            <span className="text-xs text-gray-500">Shows mismatch count per field. Click bar or label to view details.</span>
+            <span className="text-xs text-gray-500 hidden sm:inline">
+                {selectedField ? 'Click selected bar again to clear filter.' : 'Click a bar to filter dashboard stats by field.'}
+            </span>
           </div>
           <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
@@ -130,29 +237,38 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                 />
                 <Tooltip 
                   cursor={{ fill: '#f3f4f6' }} 
-                  formatter={(value: number, name: string) => [value, name === 'mismatch' ? 'Gaps' : 'Matches']}
+                  content={<FieldAnalysisTooltip />}
                 />
-                <Legend />
+                <Legend 
+                  formatter={(value, entry) => (
+                      <span style={{ color: value === 'Gaps' ? '#ef4444' : '#374151', fontWeight: 500 }}>{value}</span>
+                  )}
+                />
                 <Bar 
                     dataKey="match" 
                     stackId="a" 
                     fill="#10b981" 
-                    radius={[0, 4, 4, 0]} 
+                    radius={[4, 0, 0, 4]} 
                     name="Matched" 
                     barSize={20} 
                 />
                 <Bar 
                     dataKey="mismatch" 
                     stackId="a" 
-                    fill="#ef4444" 
+                    fill="#ef4444" // Add base fill for Legend icon
                     radius={[0, 4, 4, 0]} 
                     name="Gaps" 
                     barSize={20}
                     cursor="pointer"
-                    onClick={(data) => {
-                        if (data && data.name) onFieldClick(data.name);
-                    }}
-                />
+                    onClick={handleChartClick}
+                >
+                    {fieldData.map((entry, index) => (
+                        <Cell 
+                           key={`cell-${index}`} 
+                           fill={selectedField && entry.name === selectedField ? '#b91c1c' : '#ef4444'} 
+                        />
+                    ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -160,12 +276,14 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
 
         {/* Reason Breakdown Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Discrepancy Root Causes</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {selectedField ? `Root Causes for ${selectedField}` : 'Discrepancy Root Causes'}
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={reasonData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} interval={0} />
                 <YAxis axisLine={false} tickLine={false} />
                 <Tooltip cursor={{ fill: '#f3f4f6' }} />
                 <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
@@ -176,7 +294,9 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
 
         {/* Match Ratio Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Overall Record Integrity</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+             {selectedField ? `Integrity: ${selectedField}` : 'Overall Record Integrity'}
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -194,6 +314,15 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
+                {/* Center Text for Match Rate */}
+                <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
+                    <tspan x="50%" dy="-0.5em" fontSize="24" fontWeight="bold" fill="#1f2937">
+                        {displayedStats.matchRate.toFixed(1)}%
+                    </tspan>
+                    <tspan x="50%" dy="1.5em" fontSize="12" fill="#6b7280" fontWeight="500">
+                        Match Rate
+                    </tspan>
+                </text>
                 <Tooltip />
                 <Legend verticalAlign="bottom" height={36}/>
               </PieChart>
@@ -207,12 +336,12 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-indigo-900 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-            AI Executive Summary
+            AI Executive Summary {selectedField ? `(${selectedField})` : ''}
           </h3>
           <button 
             onClick={handleGenerateSummary}
             disabled={loadingSummary}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium shadow-sm"
           >
             {loadingSummary ? <RefreshCw className="animate-spin" size={16}/> : <FileText size={16}/>}
             Generate Report
@@ -220,11 +349,11 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, results, onFieldClick }) =
         </div>
         
         {summary ? (
-          <div className="prose prose-sm text-gray-700 max-w-none bg-white/50 p-4 rounded-lg">
-             <div className="whitespace-pre-line">{summary}</div>
+          <div className="prose prose-sm text-gray-700 max-w-none bg-white/50 p-4 rounded-lg border border-indigo-100/50">
+             <div className="whitespace-pre-line leading-relaxed">{summary}</div>
           </div>
         ) : (
-          <p className="text-sm text-gray-500 italic">Click "Generate Report" to have Gemini analyze the current migration statistics and risk factors.</p>
+          <p className="text-sm text-gray-500 italic">Click "Generate Report" to have Gemini analyze the current statistics and risk factors.</p>
         )}
       </div>
     </div>
