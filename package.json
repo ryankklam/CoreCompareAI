@@ -11,14 +11,14 @@
   "dependencies": {
     "@google/genai": "^1.30.0",
     "recharts": "^3.5.1",
-    "react-dom": "^19.2.0",
-    "lucide-react": "^0.555.0",
-    "react": "^19.2.0"
+    "lucide-vue-next": "^0.555.0",
+    "pinia": "^2.1.6",
+    "vue": "^3.3.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
+    "@vitejs/plugin-vue": "^4.4.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^5.0.0"
   }
 }

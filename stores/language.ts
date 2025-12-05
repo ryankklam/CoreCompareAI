@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { defineStore } from 'pinia';
 
 type Language = 'en' | 'zh';
 
@@ -82,42 +82,22 @@ const translations: Translations = {
   'detail.analyzing': { en: 'Analyzing...', zh: '分析中...' },
   'detail.ai_hint': { en: 'Use Gemini AI to analyze unclassified discrepancies or get a deeper explanation of the root cause.', zh: '使用 Gemini AI 分析未分类的差异或获取更深层的根因解释。' },
   'detail.match': { en: 'Match', zh: '匹配' },
-
-  // Settings
-  'settings.title': { en: 'Known Discrepancy Dictionary', zh: '已知差异原因字典' },
-  'settings.subtitle': { en: 'Definitions used by the auto-classification engine.', zh: '自动分类引擎使用的定义。' },
-  'settings.code': { en: 'Code', zh: '代码' },
-  'settings.label': { en: 'Label', zh: '标签' },
-  'settings.description': { en: 'Description', zh: '描述' },
-  'settings.severity': { en: 'Severity', zh: '严重程度' },
 };
 
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-}
+export const useLanguageStore = defineStore('language', {
+  state: () => ({
+    language: 'en' as Language,
+  }),
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+  getters: {
+    t: (state) => (key: string): string => {
+      return translations[key]?.[state.language] || key;
+    },
+  },
 
-export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
-
-  const t = (key: string): string => {
-    return translations[key]?.[language] || key;
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
-
-export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-};
+  actions: {
+    setLanguage(lang: Language) {
+      this.language = lang;
+    },
+  },
+});
