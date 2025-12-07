@@ -120,6 +120,27 @@
                 <span class="font-mono text-gray-700">#MIG-2023-10-25-A</span>
               </span>
               
+              <!-- API Mode Toggle -->
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="text-xs font-medium">API</span>
+                <button
+                  @click="toggleMockMode"
+                  :class="[
+                    'relative inline-flex h-5 w-10 items-center rounded-full transition-colors duration-200',
+                    mockMode ? 'bg-gray-300' : 'bg-blue-600'
+                  ]"
+                  title="Toggle API Mode"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200',
+                      mockMode ? 'translate-x-1' : 'translate-x-6'
+                    ]"
+                  />
+                </button>
+                <span class="text-xs font-medium">{{ mockMode ? 'Mock' : 'Real' }}</span>
+              </div>
+
               <!-- Language Toggle -->
               <button 
                 @click="toggleLanguage"
@@ -210,14 +231,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { LayoutDashboard, GitCompare, Settings, Database, PlayCircle, Menu, X, Globe } from 'lucide-vue-next';
-import { JOB_CONFIGS, generateMockData, REASON_DICTIONARY } from './constants';
+import { LayoutDashboard, GitCompare, Settings, Database, PlayCircle, Menu, X, Globe, ToggleLeft } from 'lucide-vue-next';
+import { JOB_CONFIGS, REASON_DICTIONARY } from './constants';
 import { ComparisonResult, ComparisonStats, DiscrepancyType, JobRun, RunStatus, DataRecord } from './types';
 import Dashboard from './components/Dashboard.vue';
 import ComparisonTable from './components/ComparisonTable.vue';
 import ExecutionPanel from './components/ExecutionPanel.vue';
-import { compareData, calculateStats } from './utils';
 import { useLanguageStore } from './stores/language';
+import { apiService } from './services/apiService';
 
 // Main App Logic
 const languageStore = useLanguageStore();
@@ -228,13 +249,22 @@ const currentStats = ref<ComparisonStats | null>(null);
 const activeJobName = ref<string>("No Job Selected");
 const activeFieldFilter = ref<string | null>(null);
 const isMobileNavOpen = ref(false);
+const mockMode = ref(true); // API 模式切换开关，默认使用 mock 数据
+
+// 切换 API 模式
+const toggleMockMode = () => {
+  mockMode.value = !mockMode.value;
+  apiService.setMockMode(mockMode.value);
+  // 切换模式后刷新数据
+  onMounted();
+};
 
 // Initial load (Optional: load default mock)
-onMounted(() => {
-  const { oldData, newData } = generateMockData('LOAN_MASTER', 0.5);
-  const results = compareData(oldData, newData);
+onMounted(async () => {
+  // 使用 API 服务获取数据
+  const { results, stats } = await apiService.compareData('LOAN_MASTER');
   currentResults.value = results;
-  currentStats.value = calculateStats(results);
+  currentStats.value = stats;
   activeJobName.value = "Loan Account Master (Demo)";
 });
 
@@ -242,7 +272,7 @@ const toggleLanguage = () => {
   languageStore.setLanguage(languageStore.language === 'en' ? 'zh' : 'en');
 };
 
-const handleRunJob = (configId: string) => {
+const handleRunJob = async (configId: string) => {
   const config = JOB_CONFIGS.find(c => c.id === configId);
   if (!config) return;
 
@@ -260,83 +290,93 @@ const handleRunJob = (configId: string) => {
 
   runs.value = [newRun, ...runs.value];
 
-  // 2. Simulate Backend Delay
-  setTimeout(() => {
-      // 3. Generate Mock Result based on schema
-      const randomVariance = Math.random();
-      const { oldData, newData } = generateMockData(config.schemaType, randomVariance);
-      const results = compareData(oldData, newData);
-      const stats = calculateStats(results);
+  try {
+    // 2. 使用 API 服务获取比较结果
+    const { results, stats } = await apiService.compareData(config.schemaType);
 
-      // 4. Update Job to Completed
-      runs.value = runs.value.map(run => {
-          if (run.runId === newRunId) {
-              const updatedRun = {
-                  ...run,
-                  status: RunStatus.COMPLETED,
-                  endTime: new Date().toISOString(),
-                  results,
-                  stats
-              };
-              console.log('Updated run with results and stats:', {
-                  runId: updatedRun.runId,
-                  hasResults: !!updatedRun.results,
-                  hasStats: !!updatedRun.stats,
-                  resultsLength: updatedRun.results?.length,
-                  stats: updatedRun.stats
-              });
-              return updatedRun;
-          }
-          return run;
-      });
-      console.log('Updated runs array:', runs.value.length, 'runs');
-      console.log('First run in array:', runs.value[0]);
-  }, 2000); 
+    // 3. Update Job to Completed
+    runs.value = runs.value.map(run => {
+        if (run.runId === newRunId) {
+            const updatedRun = {
+                ...run,
+                status: RunStatus.COMPLETED,
+                endTime: new Date().toISOString(),
+                results,
+                stats
+            };
+            console.log('Updated run with results and stats:', {
+                runId: updatedRun.runId,
+                hasResults: !!updatedRun.results,
+                hasStats: !!updatedRun.stats,
+                resultsLength: updatedRun.results?.length,
+                stats: updatedRun.stats
+            });
+            return updatedRun;
+        }
+        return run;
+    });
+    console.log('Updated runs array:', runs.value.length, 'runs');
+    console.log('First run in array:', runs.value[0]);
+  } catch (error) {
+    console.error('Error running job:', error);
+    // 更新任务状态为失败
+    runs.value = runs.value.map(run => {
+        if (run.runId === newRunId) {
+            return {
+                ...run,
+                status: RunStatus.FAILED,
+                endTime: new Date().toISOString()
+            };
+        }
+        return run;
+    });
+  }
 };
 
-const handleViewResults = (runId: string) => {
+const handleViewResults = async (runId: string) => {
   console.log('=== handleViewResults called ===');
   console.log('Looking for runId:', runId);
-  console.log('Current runs array:', runs.value);
-  const run = runs.value.find(r => r.runId === runId);
-  console.log('Found run:', run);
-  if (!run) {
-      console.error('Run not found! runId:', runId);
-      return;
-  }
-  console.log('Run details:', {
-      runId: run.runId,
-      configName: run.configName,
-      status: run.status,
-      hasResults: !!run.results,
-      hasStats: !!run.stats,
-      results: run.results,
-      stats: run.stats,
-      resultsLength: run.results?.length,
-      schemaType: run.schemaType
-  });
-  // 即使没有results或stats，也尝试导航到dashboard
-  if (run.results && run.stats) {
-      currentResults.value = run.results;
-      currentStats.value = run.stats;
-      activeJobName.value = run.configName;
-      activeFieldFilter.value = null; // Reset filter
-      activeTab.value = 'dashboard';
-      isMobileNavOpen.value = false; // Close mobile nav on selection
-      console.log('Successfully navigated to dashboard');
-  } else {
-      console.error('Run is missing results or stats!');
-      // 尝试使用mock数据
-      const { oldData, newData } = generateMockData(run.schemaType || 'LOAN_MASTER', 0.5);
-      const results = compareData(oldData, newData);
-      const stats = calculateStats(results);
-      currentResults.value = results;
-      currentStats.value = stats;
-      activeJobName.value = run.configName;
-      activeFieldFilter.value = null;
-      activeTab.value = 'dashboard';
-      isMobileNavOpen.value = false;
-      console.log('Used mock data as fallback');
+  
+  try {
+    // 使用 API 服务获取运行结果
+    const run = await apiService.getRunResults(runId);
+    console.log('Found run:', run);
+    
+    console.log('Run details:', {
+        runId: run.runId,
+        configName: run.configName,
+        status: run.status,
+        hasResults: !!run.results,
+        hasStats: !!run.stats,
+        results: run.results,
+        stats: run.stats,
+        resultsLength: run.results?.length,
+        schemaType: run.schemaType
+    });
+    
+    // 检查运行结果是否完整
+    if (run.results && run.stats) {
+        currentResults.value = run.results;
+        currentStats.value = run.stats;
+        activeJobName.value = run.configName;
+        activeFieldFilter.value = null; // Reset filter
+        activeTab.value = 'dashboard';
+        isMobileNavOpen.value = false; // Close mobile nav on selection
+        console.log('Successfully navigated to dashboard');
+    } else {
+        console.error('Run is missing results or stats!');
+        // 使用 API 服务生成新的 mock 数据作为备选
+        const { results, stats } = await apiService.compareData(run.schemaType || 'LOAN_MASTER');
+        currentResults.value = results;
+        currentStats.value = stats;
+        activeJobName.value = run.configName;
+        activeFieldFilter.value = null;
+        activeTab.value = 'dashboard';
+        isMobileNavOpen.value = false;
+        console.log('Used mock data as fallback');
+    }
+  } catch (error) {
+    console.error('Error fetching run results:', error);
   }
 };
 
