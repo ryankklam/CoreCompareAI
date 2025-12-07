@@ -16,8 +16,8 @@
               <Database :size="20" class="text-white" />
           </div>
           <div>
-              <h1 class="font-bold text-lg tracking-tight">{{ t('app.title') }}</h1>
-              <p class="text-xs text-slate-400">{{ t('app.subtitle') }}</p>
+              <h1 class="font-bold text-lg tracking-tight">{{ languageStore.t('app.title') }}</h1>
+              <p class="text-xs text-slate-400">{{ languageStore.t('app.subtitle') }}</p>
           </div>
         </div>
         <!-- Close button for mobile -->
@@ -36,7 +36,7 @@
               :class="activeTab === 'execution' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
           >
               <PlayCircle :size="18" />
-              {{ t('nav.run') }}
+              {{ languageStore.t('nav.run') }}
           </button>
           <div class="my-2 border-t border-slate-800 opacity-50"></div>
           <button
@@ -45,7 +45,7 @@
               :class="activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
           >
               <LayoutDashboard :size="18" />
-              {{ t('nav.summary') }}
+              {{ languageStore.t('nav.summary') }}
           </button>
           <button
               @click="activeTab = 'compare'; isMobileNavOpen = false"
@@ -53,17 +53,17 @@
               :class="activeTab === 'compare' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
           >
               <GitCompare :size="18" />
-              {{ t('nav.details') }}
+              {{ languageStore.t('nav.details') }}
           </button>
         <div class="pt-4 mt-4 border-t border-slate-800">
-           <p class="px-4 text-xs font-semibold text-slate-500 uppercase mb-2">{{ t('nav.config') }}</p>
+           <p class="px-4 text-xs font-semibold text-slate-500 uppercase mb-2">{{ languageStore.t('nav.config') }}</p>
            <button
               @click="activeTab = 'settings'; isMobileNavOpen = false"
               class="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors"
               :class="activeTab === 'settings' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
           >
               <Settings :size="18" />
-              {{ t('nav.dictionary') }}
+              {{ languageStore.t('nav.dictionary') }}
           </button>
         </div>
       </nav>
@@ -71,11 +71,11 @@
       <div class="p-4 bg-slate-800/50 m-4 rounded-xl border border-slate-700">
           <div class="flex items-center gap-2 mb-2">
               <div class="w-2 h-2 rounded-full bg-green-500"></div>
-              <span class="text-xs font-medium text-slate-300">{{ t('status.legacy_online') }}</span>
+              <span class="text-xs font-medium text-slate-300">{{ languageStore.t('status.legacy_online') }}</span>
           </div>
           <div class="flex items-center gap-2">
               <div class="w-2 h-2 rounded-full bg-green-500"></div>
-              <span class="text-xs font-medium text-slate-300">{{ t('status.new_online') }}</span>
+              <span class="text-xs font-medium text-slate-300">{{ languageStore.t('status.new_online') }}</span>
           </div>
       </div>
     </aside>
@@ -94,16 +94,16 @@
             <div class="min-w-0">
               <h2 class="text-lg md:text-xl font-semibold text-gray-800 truncate">
                   <template v-if="activeTab === 'dashboard'">
-                    {{ t('nav.summary') }}
+                    {{ languageStore.t('nav.summary') }}
                   </template>
                   <template v-else-if="activeTab === 'compare'">
-                    {{ t('nav.details') }}
+                    {{ languageStore.t('nav.details') }}
                   </template>
                   <template v-else-if="activeTab === 'execution'">
-                    {{ t('nav.run') }}
+                    {{ languageStore.t('nav.run') }}
                   </template>
                   <template v-else-if="activeTab === 'settings'">
-                    {{ t('nav.dictionary') }}
+                    {{ languageStore.t('nav.dictionary') }}
                   </template>
               </h2>
               <template v-if="activeTab !== 'execution' && activeTab !== 'settings'">
@@ -116,7 +116,7 @@
           
           <div class="flex items-center gap-4 shrink-0">
               <span class="text-sm text-gray-500 hidden sm:inline">
-                {{ t('header.batch_id') }}: 
+                {{ languageStore.t('header.batch_id') }}: 
                 <span class="font-mono text-gray-700">#MIG-2023-10-25-A</span>
               </span>
               
@@ -128,7 +128,7 @@
               >
                 <Globe :size="14" />
                 <span class="font-medium">
-                  {{ language === 'en' ? 'EN' : '中文' }}
+                  {{ languageStore.language === 'en' ? 'EN' : '中文' }}
                 </span>
               </button>
 
@@ -165,17 +165,17 @@
               <div class="p-4 md:p-8">
                   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                       <div class="p-6 border-b border-gray-100">
-                          <h3 class="text-lg font-semibold text-gray-800">{{ t('settings.title') }}</h3>
-                          <p class="text-sm text-gray-500">{{ t('settings.subtitle') }}</p>
+                          <h3 class="text-lg font-semibold text-gray-800">{{ languageStore.t('settings.title') }}</h3>
+                          <p class="text-sm text-gray-500">{{ languageStore.t('settings.subtitle') }}</p>
                       </div>
                       <div class="overflow-x-auto">
                           <table class="w-full text-sm text-left">
                               <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
                                   <tr>
-                                      <th class="px-6 py-3 whitespace-nowrap">{{ t('settings.code') }}</th>
-                                      <th class="px-6 py-3 whitespace-nowrap">{{ t('settings.label') }}</th>
-                                      <th class="px-6 py-3 whitespace-nowrap">{{ t('settings.description') }}</th>
-                                      <th class="px-6 py-3 whitespace-nowrap">{{ t('settings.severity') }}</th>
+                                      <th class="px-6 py-3 whitespace-nowrap">{{ languageStore.t('settings.code') }}</th>
+                                      <th class="px-6 py-3 whitespace-nowrap">{{ languageStore.t('settings.label') }}</th>
+                                      <th class="px-6 py-3 whitespace-nowrap">{{ languageStore.t('settings.description') }}</th>
+                                      <th class="px-6 py-3 whitespace-nowrap">{{ languageStore.t('settings.severity') }}</th>
                                   </tr>
                               </thead>
                               <tbody class="divide-y divide-gray-100">
@@ -186,10 +186,10 @@
                                   >
                                       <td class="px-6 py-4 font-mono text-blue-600 font-medium">{{ reason.code }}</td>
                                       <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                          {{ language === 'zh' ? reason.label_zh || reason.label : reason.label }}
+                                          {{ languageStore.language === 'zh' ? reason.label_zh || reason.label : reason.label }}
                                       </td>
                                       <td class="px-6 py-4 text-gray-600 min-w-[200px]">
-                                          {{ language === 'zh' ? reason.description_zh || reason.description : reason.description }}
+                                          {{ languageStore.language === 'zh' ? reason.description_zh || reason.description : reason.description }}
                                       </td>
                                       <td class="px-6 py-4">
                                           <span :class="getSeverityClass(reason.severity)">
@@ -220,8 +220,8 @@ import { compareData, calculateStats } from './utils';
 import { useLanguageStore } from './stores/language';
 
 // Main App Logic
-const { t, language, setLanguage } = useLanguageStore();
-const activeTab = ref<'dashboard' | 'compare' | 'execution' | 'settings'>('dashboard');
+const languageStore = useLanguageStore();
+const activeTab = ref<'dashboard' | 'compare' | 'execution' | 'settings'>('execution');
 const runs = ref<JobRun[]>([]);
 const currentResults = ref<ComparisonResult[]>([]);
 const currentStats = ref<ComparisonStats | null>(null);
@@ -239,7 +239,7 @@ onMounted(() => {
 });
 
 const toggleLanguage = () => {
-  setLanguage(language === 'en' ? 'zh' : 'en');
+  languageStore.setLanguage(languageStore.language === 'en' ? 'zh' : 'en');
 };
 
 const handleRunJob = (configId: string) => {

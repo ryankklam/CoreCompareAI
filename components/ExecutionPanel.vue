@@ -2,7 +2,7 @@
   <div class="p-6 space-y-8">
     <!-- Configuration Cards -->
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ t('exec.available_jobs') }}</h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ languageStore.t('exec.available_jobs') }}</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           v-for="config in configs"
@@ -39,7 +39,7 @@
     <!-- Execution History -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-         <h2 class="text-lg font-semibold text-gray-800">{{ t('exec.job_history') }}</h2>
+         <h2 class="text-lg font-semibold text-gray-800">{{ languageStore.t('exec.job_history') }}</h2>
          <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-xs font-medium">{{ runs.length }} Runs</span>
       </div>
       
@@ -47,18 +47,18 @@
         <table class="w-full text-sm text-left">
           <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
             <tr>
-              <th class="px-6 py-3 font-medium">{{ t('exec.run_id') }}</th>
-              <th class="px-6 py-3 font-medium">{{ t('exec.job_name') }}</th>
-              <th class="px-6 py-3 font-medium">{{ t('exec.start_time') }}</th>
-              <th class="px-6 py-3 font-medium">{{ t('exec.duration') }}</th>
-              <th class="px-6 py-3 font-medium">{{ t('exec.status') }}</th>
-              <th class="px-6 py-3 font-medium text-right">{{ t('exec.actions') }}</th>
+              <th class="px-6 py-3 font-medium">{{ languageStore.t('exec.run_id') }}</th>
+              <th class="px-6 py-3 font-medium">{{ languageStore.t('exec.job_name') }}</th>
+              <th class="px-6 py-3 font-medium">{{ languageStore.t('exec.start_time') }}</th>
+              <th class="px-6 py-3 font-medium">{{ languageStore.t('exec.duration') }}</th>
+              <th class="px-6 py-3 font-medium">{{ languageStore.t('exec.status') }}</th>
+              <th class="px-6 py-3 font-medium text-right">{{ languageStore.t('exec.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
             <tr v-if="sortedRuns.length === 0">
               <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">
-                {{ t('exec.no_history') }}
+                {{ languageStore.t('exec.no_history') }}
               </td>
             </tr>
             <tr
@@ -87,7 +87,7 @@
                   @click="emit('view-results', run.runId)"
                   class="text-indigo-600 hover:text-indigo-800 font-medium text-xs flex items-center gap-1 ml-auto"
                 >
-                  <Eye :size="14" /> {{ t('exec.view_results') }}
+                  <Eye :size="14" /> {{ languageStore.t('exec.view_results') }}
                 </button>
               </td>
             </tr>
@@ -114,7 +114,7 @@ const emit = defineEmits<{
   'view-results': [runId: string];
 }>();
 
-const { t } = useLanguageStore();
+const languageStore = useLanguageStore();
 
 // Sort runs by startTime desc
 const sortedRuns = computed(() => {
@@ -140,28 +140,28 @@ const getStatusConfig = (status: RunStatus) => {
       return {
         class: 'px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 flex items-center gap-1',
         icon: 'Clock',
-        text: t('exec.queued'),
+        text: languageStore.t('exec.queued'),
         isAnimated: false
       };
     case RunStatus.RUNNING:
       return {
         class: 'px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex items-center gap-1',
         icon: 'RefreshCw',
-        text: t('exec.running'),
+        text: languageStore.t('exec.running'),
         isAnimated: true
       };
     case RunStatus.COMPLETED:
       return {
         class: 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 flex items-center gap-1',
         icon: 'CheckCircle2',
-        text: t('exec.completed'),
+        text: languageStore.t('exec.completed'),
         isAnimated: false
       };
     case RunStatus.FAILED:
       return {
         class: 'px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 flex items-center gap-1',
         icon: 'AlertCircle',
-        text: t('exec.failed'),
+        text: languageStore.t('exec.failed'),
         isAnimated: false
       };
     default:

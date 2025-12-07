@@ -9,7 +9,7 @@
         <div class="flex items-center gap-2">
             <Filter :size="20" />
             <span class="font-medium">
-              {{ t('dashboard.filter_banner') }} <span class="font-bold">{{ selectedField }}</span>
+              {{ languageStore.t('dashboard.filter_banner') }} <span class="font-bold">{{ selectedField }}</span>
             </span>
         </div>
         <div class="flex items-center gap-3">
@@ -17,7 +17,7 @@
                 @click="emit('field-click', selectedField)"
                 class="flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
             >
-                {{ t('dashboard.view_details') }} <ArrowRight :size="14" />
+                {{ languageStore.t('dashboard.view_details') }} <ArrowRight :size="14" />
             </button>
             <button 
                 @click="clearSelection"
@@ -36,8 +36,8 @@
         </div>
         <div>
           <p class="text-sm text-gray-500 font-medium">
-            {{ selectedField ? `Total ${selectedField}` : t('dashboard.total_records') }}
-          </p>
+              {{ selectedField ? `Total ${selectedField}` : languageStore.t('dashboard.total_records') }}
+            </p>
           <h3 class="text-2xl font-bold text-gray-800">{{ displayedStats.totalRecords }}</h3>
         </div>
       </div>
@@ -47,7 +47,7 @@
           <CheckCircle :size="24" />
         </div>
         <div>
-          <p class="text-sm text-gray-500 font-medium">{{ t('dashboard.match_rate') }}</p>
+          <p class="text-sm text-gray-500 font-medium">{{ languageStore.t('dashboard.match_rate') }}</p>
           <h3 class="text-2xl font-bold text-gray-800">{{ displayedStats.matchRate.toFixed(2) }}%</h3>
         </div>
       </div>
@@ -58,8 +58,8 @@
         </div>
         <div>
           <p class="text-sm text-gray-500 font-medium">
-            {{ selectedField ? t('dashboard.gaps_detected') : t('dashboard.records_with_gaps') }}
-          </p>
+              {{ selectedField ? languageStore.t('dashboard.gaps_detected') : languageStore.t('dashboard.records_with_gaps') }}
+            </p>
           <h3 class="text-2xl font-bold text-gray-800">{{ displayedStats.mismatchCount }}</h3>
         </div>
       </div>
@@ -69,7 +69,7 @@
           <Activity :size="24" />
         </div>
         <div>
-          <p class="text-sm text-gray-500 font-medium">{{ t('dashboard.processing_time') }}</p>
+          <p class="text-sm text-gray-500 font-medium">{{ languageStore.t('dashboard.processing_time') }}</p>
           <h3 class="text-2xl font-bold text-gray-800">0.8s</h3>
         </div>
       </div>
@@ -81,10 +81,10 @@
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <BarChart2 :size="20" class="text-blue-500"/>
-            {{ t('dashboard.field_analysis') }}
+            {{ languageStore.t('dashboard.field_analysis') }}
           </h3>
           <span class="text-xs text-gray-500 hidden sm:inline">
-              {{ selectedField ? t('dashboard.field_analysis_hint_active') : t('dashboard.field_analysis_hint') }}
+              {{ selectedField ? languageStore.t('dashboard.field_analysis_hint_active') : languageStore.t('dashboard.field_analysis_hint') }}
           </span>
         </div>
         <div class="h-80 overflow-auto">
@@ -119,7 +119,7 @@
       <!-- Reason Breakdown (Simplified) -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">
-          {{ selectedField ? `${t('dashboard.root_causes_for')} ${selectedField}` : t('dashboard.root_causes') }}
+          {{ selectedField ? `${languageStore.t('dashboard.root_causes_for')} ${selectedField}` : languageStore.t('dashboard.root_causes') }}
         </h3>
         <div class="h-80 overflow-auto">
           <table class="w-full text-sm">
@@ -146,7 +146,7 @@
       <!-- Match Ratio (Simplified) -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">
-           {{ selectedField ? `Integrity: ${selectedField}` : t('dashboard.integrity') }}
+           {{ selectedField ? `Integrity: ${selectedField}` : languageStore.t('dashboard.integrity') }}
         </h3>
         <div class="h-80 flex items-center justify-center">
           <div class="text-center">
@@ -178,7 +178,7 @@
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-indigo-900 flex items-center gap-2">
           <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-          {{ t('dashboard.ai_summary') }} {{ selectedField ? `(${selectedField})` : '' }}
+          {{ languageStore.t('dashboard.ai_summary') }} {{ selectedField ? `(${selectedField})` : '' }}
         </h3>
         <button 
           @click="handleGenerateSummary"
@@ -187,14 +187,14 @@
         >
           <RefreshCw v-if="loadingSummary" :size="16" class="animate-spin" />
           <FileText v-else :size="16" />
-          {{ t('dashboard.generate_report') }}
+          {{ languageStore.t('dashboard.generate_report') }}
         </button>
       </div>
       
       <div v-if="summary" class="prose prose-sm text-gray-700 max-w-none bg-white/50 p-4 rounded-lg border border-indigo-100/50">
          <div class="whitespace-pre-line leading-relaxed">{{ summary }}</div>
       </div>
-      <p v-else class="text-sm text-gray-500 italic">{{ t('dashboard.ai_placeholder') }}</p>
+      <p v-else class="text-sm text-gray-500 italic">{{ languageStore.t('dashboard.ai_placeholder') }}</p>
     </div>
   </div>
 </template>
@@ -219,7 +219,7 @@ const emit = defineEmits<{
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
 
-const { t, language } = useLanguageStore();
+const languageStore = useLanguageStore();
 const summary = ref<string>("");
 const loadingSummary = ref<boolean>(false);
 const selectedField = ref<string | null>(null);
@@ -253,18 +253,24 @@ const displayedStats = computed(() => {
 });
 
 const pieData = computed(() => [
-  { name: t('dashboard.matched'), value: displayedStats.matchCount },
-  { name: t('dashboard.gaps'), value: displayedStats.mismatchCount },
+  { name: languageStore.t('dashboard.matched'), value: displayedStats.value.matchCount },
+  { name: languageStore.t('dashboard.gaps'), value: displayedStats.value.mismatchCount },
 ]);
 
 const reasonData = computed(() => {
-  const breakdown = displayedStats.discrepancyBreakdown || {};
+  const breakdown = displayedStats.value.discrepancyBreakdown || {};
   return Object.entries(breakdown).map(([key, value]) => {
-    // Get translated label for the reason code if available
-    const label = (REASON_DICTIONARY[key] && (language === 'zh' ? REASON_DICTIONARY[key].label_zh : REASON_DICTIONARY[key].label)) || key;
+    // Get translated label and description for the reason code if available
+    const reason = REASON_DICTIONARY[key];
+    const label = (reason && (languageStore.language === 'zh' ? reason.label_zh : reason.label)) || key;
+    const description = (reason && (languageStore.language === 'zh' ? reason.description_zh : reason.description)) || '';
+    const severity = reason?.severity || 'low';
     return {
       name: label,
       count: value,
+      key: key,
+      description: description,
+      severity: severity
     };
   });
 });
@@ -285,7 +291,7 @@ const handleGenerateSummary = async () => {
       ? props.results.filter(r => r.diffs.includes(selectedField.value!))
       : props.results.filter(r => r.type !== 'MATCH');
 
-  const text = await generateExecutiveSummary(displayedStats.value, relevantResults, language);
+  const text = await generateExecutiveSummary(displayedStats.value, relevantResults, languageStore.language);
   summary.value = text;
   loadingSummary.value = false;
 };

@@ -5,7 +5,7 @@
       <div class="p-4 border-b border-gray-100">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
           <div class="flex items-center gap-2">
-            <h2 class="text-lg font-semibold text-gray-800">{{ t('table.records') }}</h2>
+            <h2 class="text-lg font-semibold text-gray-800">{{ languageStore.t('table.records') }}</h2>
             <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-xs font-medium">{{ filteredResults.length }}</span>
           </div>
           
@@ -22,8 +22,8 @@
                     :class="{ 'border-blue-300 bg-blue-50 text-blue-700 font-medium': localFieldFilter, 'border-gray-200 text-gray-700': !localFieldFilter }"
                 >
                     <option value="">
-                      {{ language === 'zh' ? '所有字段' : 'All Fields' }}
-                    </option>
+                      {{ languageStore.language === 'zh' ? '所有字段' : 'All Fields' }}
+                </option>
                     <option
                         v-for="field in allFields"
                         :key="field"
@@ -42,7 +42,7 @@
               <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="16" />
               <input 
                 type="text" 
-                :placeholder="t('table.search_placeholder')" 
+                :placeholder="languageStore.t('table.search_placeholder')" 
                 class="w-full xl:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 v-model="searchTerm"
               />
@@ -55,7 +55,7 @@
                 :class="{ 'bg-gray-100 text-gray-900': filter === 'ALL', 'bg-white text-gray-600 hover:bg-gray-50': filter !== 'ALL' }"
                 @click="filter = 'ALL'"
               >
-                {{ t('table.filter.all') }}
+                {{ languageStore.t('table.filter.all') }}
               </button>
               <button 
                 class="flex-1 xl:flex-none px-3 py-2 text-sm font-medium whitespace-nowrap"
@@ -63,7 +63,7 @@
                 @click="filter = 'EXPECTED'"
                 title="Expected Gaps (Defined in Known Discrepancy Dictionary)"
               >
-                {{ t('table.filter.expected') }}
+                {{ languageStore.t('table.filter.expected') }}
               </button>
               <button 
                 class="flex-1 xl:flex-none px-3 py-2 text-sm font-medium"
@@ -71,7 +71,7 @@
                 @click="filter = 'UNKNOWN'"
                 title="Unknown Mismatches"
               >
-                {{ t('table.filter.unknown') }}
+                {{ languageStore.t('table.filter.unknown') }}
               </button>
             </div>
           </div>
@@ -82,23 +82,23 @@
         <table class="w-full text-sm text-left">
           <thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 font-medium">{{ t('table.col.id') }}</th>
+              <th class="px-4 py-3 font-medium">{{ languageStore.t('table.col.id') }}</th>
               
               <!-- Dynamic Columns based on Field Filter -->
               <template v-if="localFieldFilter">
                 <th class="px-4 py-3 font-medium bg-red-50/50 text-red-600">
-                  {{ t('table.col.legacy') }} {{ localFieldFilter }}
+                  {{ languageStore.t('table.col.legacy') }} {{ localFieldFilter }}
                 </th>
                 <th class="px-4 py-3 font-medium bg-green-50/50 text-green-600">
-                  {{ t('table.col.new') }} {{ localFieldFilter }}
+                  {{ languageStore.t('table.col.new') }} {{ localFieldFilter }}
                 </th>
               </template>
               <template v-else>
-                <th class="px-4 py-3 font-medium">{{ t('table.col.status') }}</th>
+                <th class="px-4 py-3 font-medium">{{ languageStore.t('table.col.status') }}</th>
               </template>
 
-              <th class="px-4 py-3 font-medium hidden sm:table-cell">{{ t('table.col.reason') }}</th>
-              <th class="px-4 py-3 font-medium text-right">{{ t('table.col.action') }}</th>
+              <th class="px-4 py-3 font-medium hidden sm:table-cell">{{ languageStore.t('table.col.reason') }}</th>
+              <th class="px-4 py-3 font-medium text-right">{{ languageStore.t('table.col.action') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -128,7 +128,7 @@
                     <AlertCircle :size="12" />
                   </template>
                   <span :class="getStatusBadgeClass(row.type)">
-                    {{ row.type === DiscrepancyType.MATCH ? t('detail.match') : row.type }}
+                    {{ row.type === DiscrepancyType.MATCH ? languageStore.t('detail.match') : row.type }}
                   </span>
                 </td>
               </template>
@@ -152,8 +152,8 @@
             </tr>
             <tr v-if="filteredResults.length === 0">
               <td :colspan="localFieldFilter ? 5 : 4" class="text-center py-8 text-gray-400 italic">
-                {{ t('table.no_records') }}
-              </td>
+              {{ languageStore.t('table.no_records') }}
+                </td>
             </tr>
           </tbody>
         </table>
@@ -175,7 +175,7 @@
               <ArrowLeft :size="20" />
           </button>
           <div>
-            <h3 class="font-semibold text-gray-800">{{ t('detail.title') }}</h3>
+            <h3 class="font-semibold text-gray-800">{{ languageStore.t('detail.title') }}</h3>
             <p class="text-xs text-gray-500">{{ selectedRecord.recordId }}</p>
           </div>
         </div>
@@ -196,7 +196,7 @@
               :class="selectedRecord.reasonCode === 'UNKNOWN' ? 'text-red-800' : 'text-blue-800'"
             >
               <AlertCircle :size="16"/>
-              {{ selectedRecord.reasonCode === 'UNKNOWN' ? t('detail.unknown_title') : t('detail.known_title') }}
+              {{ selectedRecord.reasonCode === 'UNKNOWN' ? languageStore.t('detail.unknown_title') : languageStore.t('detail.known_title') }}
             </h4>
             <template v-if="selectedRecord.reasonCode && REASON_DICTIONARY[selectedRecord.reasonCode]">
               <div
@@ -204,11 +204,11 @@
                 :class="selectedRecord.reasonCode === 'UNKNOWN' ? 'text-red-700' : 'text-blue-700'"
               >
                 <p class="font-medium">
-                  {{ (language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].label_zh : REASON_DICTIONARY[selectedRecord.reasonCode].label) }}
+                  {{ (languageStore.language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].label_zh : REASON_DICTIONARY[selectedRecord.reasonCode].label) }}
                   ({{ selectedRecord.reasonCode }})
                 </p>
                 <p class="opacity-80">
-                  {{ (language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].description_zh : REASON_DICTIONARY[selectedRecord.reasonCode].description) }}
+                  {{ (languageStore.language === 'zh' ? REASON_DICTIONARY[selectedRecord.reasonCode].description_zh : REASON_DICTIONARY[selectedRecord.reasonCode].description) }}
                 </p>
               </div>
             </template>
@@ -218,9 +218,9 @@
         <!-- Field Comparison Grid -->
         <div class="space-y-4">
           <div class="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-500 uppercase pb-2 border-b">
-            <div>{{ t('detail.field') }}</div>
-            <div>{{ t('detail.legacy_core') }}</div>
-            <div>{{ t('detail.new_core') }}</div>
+            <div>{{ languageStore.t('detail.field') }}</div>
+            <div>{{ languageStore.t('detail.legacy_core') }}</div>
+            <div>{{ languageStore.t('detail.new_core') }}</div>
           </div>
           
           <div
@@ -246,9 +246,9 @@
           <div class="mt-8 pt-4 border-t border-gray-100">
             <div class="flex justify-between items-center mb-3">
               <h4 class="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                <Sparkles :size="14" class="text-indigo-500" />
-                {{ t('detail.ai_analysis') }}
-              </h4>
+              <Sparkles :size="14" class="text-indigo-500" />
+              {{ languageStore.t('detail.ai_analysis') }}
+            </h4>
               <template v-if="!aiAnalysis[selectedRecord.recordId]">
                 <button 
                   @click="handleAiAnalyze(selectedRecord)"
@@ -256,10 +256,10 @@
                   class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition flex items-center gap-1 disabled:opacity-50"
                 >
                   <template v-if="analyzingId === selectedRecord.recordId">
-                    {{ t('detail.analyzing') }}
+                    {{ languageStore.t('detail.analyzing') }}
                   </template>
                   <template v-else>
-                    {{ t('detail.analyze_btn') }}
+                    {{ languageStore.t('detail.analyze_btn') }}
                   </template>
                 </button>
               </template>
@@ -272,7 +272,7 @@
             </template>
             <template v-else>
               <p class="text-xs text-gray-400">
-                {{ t('detail.ai_hint') }}
+                {{ languageStore.t('detail.ai_hint') }}
               </p>
             </template>
           </div>
@@ -299,7 +299,7 @@ const emit = defineEmits<{
   'field-filter-change': [field: string | null];
 }>();
 
-const { t, language } = useLanguageStore();
+const languageStore = useLanguageStore();
 const localFieldFilter = ref(props.activeFieldFilter || null);
 const filter = ref<'ALL' | 'EXPECTED' | 'UNKNOWN'>('ALL');
 const searchTerm = ref('');
@@ -355,7 +355,7 @@ const handleFieldFilterChange = () => {
 
 const handleAiAnalyze = async (record: ComparisonResult) => {
   analyzingId.value = record.recordId;
-  const analysis = await analyzeDiscrepancyWithAI(record.oldRecord, record.newRecord, REASON_DICTIONARY, language);
+  const analysis = await analyzeDiscrepancyWithAI(record.oldRecord, record.newRecord, REASON_DICTIONARY, languageStore.language);
   aiAnalysis.value = { ...aiAnalysis.value, [record.recordId]: analysis };
   analyzingId.value = null;
 };
