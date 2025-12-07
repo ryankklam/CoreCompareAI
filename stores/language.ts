@@ -82,6 +82,14 @@ const translations: Translations = {
   'detail.analyzing': { en: 'Analyzing...', zh: '分析中...' },
   'detail.ai_hint': { en: 'Use Gemini AI to analyze unclassified discrepancies or get a deeper explanation of the root cause.', zh: '使用 Gemini AI 分析未分类的差异或获取更深层的根因解释。' },
   'detail.match': { en: 'Match', zh: '匹配' },
+  
+  // Settings
+  'settings.title': { en: 'Known Discrepancy Dictionary', zh: '差异原因字典' },
+  'settings.subtitle': { en: 'Configure and understand discrepancy reasons', zh: '配置和理解差异原因' },
+  'settings.code': { en: 'Code', zh: '代码' },
+  'settings.label': { en: 'Label', zh: '标签' },
+  'settings.description': { en: 'Description', zh: '描述' },
+  'settings.severity': { en: 'Severity', zh: '严重程度' },
 };
 
 export const useLanguageStore = defineStore('language', {
