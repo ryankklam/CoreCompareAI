@@ -201,7 +201,6 @@
 
 <script setup lang="ts">
 import { ref, computed, defineComponent } from 'vue';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Activity, AlertTriangle, CheckCircle, FileText, RefreshCw, BarChart2, Filter, X, ArrowRight } from 'lucide-vue-next';
 import { ComparisonStats, ComparisonResult } from '../types';
 import { generateExecutiveSummary } from '../services/geminiService';
